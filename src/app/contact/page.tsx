@@ -24,12 +24,24 @@ export default function ContactPage() {
         e.preventDefault();
         setIsLoading(true);
 
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        try {
+            const res = await fetch("/api/contact", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData),
+            });
 
-        toast.success("Message sent! We'll get back to you soon.");
-        setFormData({ name: "", email: "", subject: "", message: "" });
-        setIsLoading(false);
+            if (res.ok) {
+                toast.success("Message sent! check your inbox for confirmation.");
+                setFormData({ name: "", email: "", subject: "", message: "" });
+            } else {
+                toast.error("Something went wrong. Please try again.");
+            }
+        } catch (error) {
+            toast.error("Failed to send message.");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (

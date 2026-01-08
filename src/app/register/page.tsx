@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,6 +59,9 @@ export default function RegisterPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     ...formData,
+                    phone: formData.phone || undefined,
+                    carModel: formData.carModel || undefined,
+                    city: formData.city || undefined,
                     carYear: formData.carYear ? parseInt(formData.carYear) : undefined,
                 }),
             });
@@ -65,7 +69,12 @@ export default function RegisterPage() {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || "Registration failed");
+                // Construct a helpful error message from Zod details if available
+                let errorMessage = data.error || "Registration failed";
+                if (data.details && Array.isArray(data.details)) {
+                    errorMessage = data.details.map((issue: any) => issue.message).join(", ");
+                }
+                throw new Error(errorMessage);
             }
 
             toast.success("Account created! Please sign in.");
@@ -116,9 +125,14 @@ export default function RegisterPage() {
                 {/* Registration Form */}
                 <Card className="border-border">
                     <CardHeader className="text-center">
-                        <Link href="/" className="mx-auto mb-4 md:hidden">
-                            <div className="w-14 h-14 rounded-full gradient-primary flex items-center justify-center">
-                                <span className="text-white font-bold text-2xl">GT</span>
+                        <Link href="/" className="mx-auto mb-4 md:hidden block">
+                            <div className="relative w-20 h-20 mx-auto flex items-center justify-center">
+                                <Image
+                                    src="/pgtc-logo.png"
+                                    alt="PGTC Logo"
+                                    fill
+                                    className="object-contain"
+                                />
                             </div>
                         </Link>
                         <CardTitle className="text-2xl">

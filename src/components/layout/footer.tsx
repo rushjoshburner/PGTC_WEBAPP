@@ -19,7 +19,7 @@ export function Footer() {
                             <span className="font-display font-bold text-white">PGTC MUMBAI</span>
                         </div>
                         <p className="text-gray-500 text-sm font-body">
-                            Fueling the car culture in Mumbai since 2014. We don&apos;t just drive; we belong.
+                            Fueling the car culture in Mumbai since 2021. We don&apos;t just drive; we belong.
                         </p>
                     </div>
 
@@ -64,8 +64,8 @@ export function Footer() {
                 <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
                     <p className="text-gray-600 text-xs font-body">© {new Date().getFullYear()} Polo GT Club Mumbai. All rights reserved.</p>
                     <div className="flex gap-6 text-gray-600 text-xs font-body uppercase tracking-wider">
-                        <a href="https://instagram.com/pgtcmumbai" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Instagram</a>
-                        <a href="https://youtube.com/@pgtcmumbai" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">YouTube</a>
+                        <a href="https://www.instagram.com/pologtclubmumbai/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Instagram</a>
+                        <a href="https://www.youtube.com/@pologtclubmumbai" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">YouTube</a>
                         <a href="#" className="hover:text-white transition-colors">Twitter</a>
                     </div>
                 </div>

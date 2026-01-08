@@ -18,6 +18,7 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   title: "Polo GT Club",
   description: "The premier community for Volkswagen Polo GT enthusiasts in India",
+  manifest: "/manifest.json",
 };
 
 export const viewport: Viewport = {

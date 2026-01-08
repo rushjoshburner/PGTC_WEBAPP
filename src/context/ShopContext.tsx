@@ -1,96 +1,126 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-
-// Define types for our different product categories
-export type ProductType = 'trinity' | 'torque' | 'parts' | 'merch';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export interface Product {
     id: string;
     name: string;
     description: string;
-    price: string;
+    price: number;
     image: string;
-    tag?: string; // e.g. "Performance", "Verified"
-    category: ProductType;
+    category: string;
+    sku?: string;
+}
+
+export interface CartItem {
+    id: string;
+    name: string;
+    price: number;
+    image: string;
+    quantity: number;
 }
 
 interface ShopContextType {
     trinityProducts: Product[];
-    torqueCars: Product[];
-    usedParts: Product[];
     merchProducts: Product[];
-    addProduct: (product: Product) => void;
-    deleteProduct: (id: string, category: ProductType) => void;
+    isLoading: boolean;
+    cart: CartItem[];
+    cartTotal: number;
+    addToCart: (item: CartItem) => void;
+    removeFromCart: (id: string) => void;
+    updateQuantity: (id: string, qty: number) => void;
+    clearCart: () => void;
 }
 
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
 
-// Initial Data
-const INITIAL_TRINITY: Product[] = [
-    { id: 't1', name: "Stage 1 & 2 Remaps", description: "Custom ECU tuning for Indian fuel quality. +35HP gains.", price: "From ₹18,000", image: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?q=80&w=2600&auto=format&fit=crop", category: 'trinity' },
-    { id: 't2', name: "Suspension Setup", description: "Authorized dealers for Bilstein, KW, and Cobra lowering springs.", price: "On Request", image: "", category: 'trinity' },
-    { id: 't3', name: "Exhaust Systems", description: "Borla, Remus, and custom full-system fabrication.", price: "From ₹25,000", image: "", category: 'trinity' },
-    { id: 't4', name: "Big Turbo Kits", description: "IS20/IS38 swaps for the 1.0 TSI and 1.2 TSI engines.", price: "From ₹1.2L", image: "", category: 'trinity' }
-];
-
-const INITIAL_TORQUE: Product[] = [
-    { id: 'c1', name: "2016 Polo GTI (1.8)", description: "Stage 2 APR, KW V3, 45k kms", price: "₹16.5L", image: "https://images.unsplash.com/photo-1542282088-fe8426682b8f?q=80&w=2500&auto=format&fit=crop", category: 'torque', tag: 'Verified' },
-    { id: 'c2', name: "2019 Polo GT TSI", description: "Stock, Single Owner, 22k kms", price: "₹9.2L", image: "https://images.unsplash.com/photo-1609520505218-742184b3b223?q=80&w=2670&auto=format&fit=crop", category: 'torque', tag: 'Verified' },
-    { id: 'c3', name: "2015 Polo GT TDI", description: "Stage 1 Diesel, 17\" Rims, 60k kms", price: "₹6.8L", image: "https://images.unsplash.com/photo-1503376763036-066120622c74?q=80&w=2670&auto=format&fit=crop", category: 'torque', tag: 'Verified' }
-];
-
-const INITIAL_MERCH: Product[] = [
-    { id: 'm1', name: "PGTC 'Stealth' Hoodie", description: "Heavyweight cotton, oversized fit.", price: "₹2,499", image: "https://images.unsplash.com/photo-1552346154-21d32810aba3?q=80&w=2670&auto=format&fit=crop", category: 'merch' },
-    { id: 'm2', name: "Box Logo Tee - Black", description: "Classic fit, screen printed.", price: "₹999", image: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?q=80&w=2670&auto=format&fit=crop", category: 'merch' },
-    { id: 'm3', name: "Remove Before Flight Keytag", description: "Embroidered keytag.", price: "₹299", image: "https://images.unsplash.com/photo-1542282088-fe8426682b8f?q=80&w=2500&auto=format&fit=crop", category: 'merch' },
-    { id: 'm4', name: "Windshield Banner", description: "Matte white vinyl.", price: "₹499", image: "https://images.unsplash.com/photo-1609520505218-742184b3b223?q=80&w=2670&auto=format&fit=crop", category: 'merch' }
-];
-
-const INITIAL_PARTS: Product[] = []; // Initially empty/restricted
-
 export function ShopProvider({ children }: { children: ReactNode }) {
-    const [trinityProducts, setTrinityProducts] = useState<Product[]>(INITIAL_TRINITY);
-    const [torqueCars, setTorqueCars] = useState<Product[]>(INITIAL_TORQUE);
-    const [usedParts, setUsedParts] = useState<Product[]>(INITIAL_PARTS);
-    const [merchProducts, setMerchProducts] = useState<Product[]>(INITIAL_MERCH);
+    const [trinityProducts, setTrinityProducts] = useState<Product[]>([]);
+    const [merchProducts, setMerchProducts] = useState<Product[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [cart, setCart] = useState<CartItem[]>([]);
 
-    const addProduct = (product: Product) => {
-        switch (product.category) {
-            case 'trinity':
-                setTrinityProducts([...trinityProducts, product]);
-                break;
-            case 'torque':
-                setTorqueCars([...torqueCars, product]);
-                break;
-            case 'parts':
-                setUsedParts([...usedParts, product]);
-                break;
-            case 'merch':
-                setMerchProducts([...merchProducts, product]);
-                break;
+    useEffect(() => {
+        fetchProducts();
+        // Load cart from local storage if needed
+        const savedCart = localStorage.getItem('pgtc_cart');
+        if (savedCart) setCart(JSON.parse(savedCart));
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem('pgtc_cart', JSON.stringify(cart));
+    }, [cart]);
+
+    const fetchProducts = async () => {
+        try {
+            const res = await fetch("/api/store/products");
+            if (res.ok) {
+                const data = await res.json();
+                const allProducts: any[] = data.products || [];
+
+                const transformed = allProducts.map(p => ({
+                    id: p.id,
+                    name: p.name,
+                    description: p.description,
+                    price: p.price, // Keep as number
+                    image: parseImage(p.images),
+                    category: p.category
+                }));
+
+                setTrinityProducts(transformed.filter((p: Product) => p.category === 'TRINITY'));
+                setMerchProducts(transformed.filter((p: Product) => ['APPAREL', 'ACCESSORIES', 'STICKERS'].includes(p.category)));
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    const deleteProduct = (id: string, category: ProductType) => {
-        switch (category) {
-            case 'trinity':
-                setTrinityProducts(trinityProducts.filter(p => p.id !== id));
-                break;
-            case 'torque':
-                setTorqueCars(torqueCars.filter(p => p.id !== id));
-                break;
-            case 'parts':
-                setUsedParts(usedParts.filter(p => p.id !== id));
-                break;
-            case 'merch':
-                setMerchProducts(merchProducts.filter(p => p.id !== id));
-                break;
+    const parseImage = (json: string) => {
+        try {
+            const arr = JSON.parse(json);
+            return arr[0] || "";
+        } catch {
+            return json || "";
         }
     };
+
+    const addToCart = (item: CartItem) => {
+        setCart(prev => {
+            const existing = prev.find(i => i.id === item.id);
+            if (existing) {
+                return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
+            }
+            return [...prev, item];
+        });
+    };
+
+    const removeFromCart = (id: string) => {
+        setCart(prev => prev.filter(i => i.id !== id));
+    };
+
+    const updateQuantity = (id: string, qty: number) => {
+        if (qty < 1) return;
+        setCart(prev => prev.map(i => i.id === id ? { ...i, quantity: qty } : i));
+    };
+
+    const clearCart = () => setCart([]);
+
+    const cartTotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
 
     return (
-        <ShopContext.Provider value={{ trinityProducts, torqueCars, usedParts, merchProducts, addProduct, deleteProduct }}>
+        <ShopContext.Provider value={{
+            trinityProducts,
+            merchProducts,
+            isLoading,
+            cart,
+            cartTotal,
+            addToCart,
+            removeFromCart,
+            updateQuantity,
+            clearCart
+        }}>
             {children}
         </ShopContext.Provider>
     );

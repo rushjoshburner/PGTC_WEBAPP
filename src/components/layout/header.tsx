@@ -12,7 +12,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Menu, X, User, LogOut, LayoutDashboard, Users } from "lucide-react";
+import { Menu, X, User, LogOut, LayoutDashboard, Users, ShoppingBag } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const navLinks = [
@@ -134,6 +134,12 @@ export function Header() {
                                 </Link>
                             </>
                         )}
+
+                        {/* Cart Icon */}
+                        <Link href="/cart" className="relative group p-2 text-gray-400 hover:text-white transition-colors">
+                            <ShoppingBag className="h-5 w-5" />
+                            {/* We could use context here to show count, but for simplicity let's just show the icon or we can wrap header in context */}
+                        </Link>
 
                         {/* Mobile Menu Button */}
                         <button

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -51,51 +52,59 @@ export default function LoginPage() {
             <div className="absolute inset-0 bg-gradient-to-br from-[#001E50]/20 via-transparent to-[#E2001A]/10" />
 
             <Card className="w-full max-w-md relative z-10 border-border">
-                <CardHeader className="text-center">
-                    <Link href="/" className="mx-auto mb-4">
-                        <div className="w-14 h-14 rounded-full gradient-primary flex items-center justify-center">
-                            <span className="text-white font-bold text-2xl">GT</span>
+                <CardHeader className="text-center pt-8 pb-4">
+                    <Link href="/" className="mx-auto mb-6 block transition-transform hover:scale-105 duration-300">
+                        <div className="relative w-24 h-24 mx-auto flex items-center justify-center filter drop-shadow-[0_0_15px_rgba(226,0,26,0.3)]">
+                            <Image
+                                src="/pgtc-logo.png"
+                                alt="PGTC Logo"
+                                fill
+                                className="object-contain"
+                                priority
+                            />
                         </div>
                     </Link>
-                    <CardTitle className="text-2xl">Welcome Back</CardTitle>
-                    <CardDescription>Sign in to your Polo GT Club account</CardDescription>
+                    <CardTitle className="text-3xl font-display font-bold tracking-tight mb-2">Welcome Back</CardTitle>
+                    <CardDescription className="text-base font-body">Sign in to your Polo GT Club account</CardDescription>
                 </CardHeader>
 
                 <form onSubmit={handleSubmit}>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
+                    <CardContent className="space-y-5 px-8">
+                        <div className="space-y-1.5">
+                            <Label htmlFor="email" className="text-foreground/80 font-medium">Email Address</Label>
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="amit@example.com"
+                                placeholder="name@example.com"
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                 required
+                                className="h-11 bg-muted/30 border-input/50 focus:border-primary/50 focus:ring-primary/20 transition-all font-body"
                             />
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="space-y-1.5">
                             <div className="flex items-center justify-between">
-                                <Label htmlFor="password">Password</Label>
-                                <Link href="/forgot-password" className="text-xs text-primary hover:underline">
+                                <Label htmlFor="password" className="text-foreground/80 font-medium">Password</Label>
+                                <Link href="/forgot-password" className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
                                     Forgot password?
                                 </Link>
                             </div>
-                            <div className="relative">
+                            <div className="relative group">
                                 <Input
                                     id="password"
                                     type={showPassword ? "text" : "password"}
-                                    placeholder="••••••••"
+                                    placeholder="Enter your password"
                                     value={formData.password}
                                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                     required
+                                    className="h-11 pr-10 bg-muted/30 border-input/50 focus:border-primary/50 focus:ring-primary/20 transition-all font-body"
                                 />
                                 <Button
                                     type="button"
                                     variant="ghost"
                                     size="icon"
-                                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                                    className="absolute right-0 top-0 h-full px-3 text-muted-foreground hover:text-foreground hover:bg-transparent transition-colors"
                                     onClick={() => setShowPassword(!showPassword)}
                                 >
                                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -104,19 +113,19 @@ export default function LoginPage() {
                         </div>
                     </CardContent>
 
-                    <CardFooter className="flex flex-col gap-4">
+                    <CardFooter className="flex flex-col gap-5 px-8 pb-8 pt-2">
                         <Button
                             type="submit"
-                            className="w-full gradient-primary border-0"
+                            className="w-full h-11 text-base font-semibold gradient-primary border-0 shadow-[0_4px_14px_0_rgba(226,0,26,0.39)] hover:shadow-[0_6px_20px_rgba(226,0,26,0.23)] hover:-translate-y-0.5 transition-all duration-200"
                             disabled={isLoading}
                         >
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Sign In
                         </Button>
 
-                        <p className="text-sm text-center text-muted-foreground">
+                        <p className="text-sm text-center text-muted-foreground font-body">
                             Don&apos;t have an account?{" "}
-                            <Link href="/register" className="text-primary hover:underline font-medium">
+                            <Link href="/register" className="text-primary hover:text-primary/80 hover:underline font-semibold transition-colors">
                                 Join the Club
                             </Link>
                         </p>
