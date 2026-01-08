@@ -1,0 +1,365 @@
+// Polo GT Club PWA - Database Schema (SQLite compatible)
+// Using String for enums since SQLite doesn't support them in Prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER & AUTHENTICATION
+// ============================================
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  phone           String?   @unique
+  password        String?
+  fullName        String
+  city            String?
+  state           String?
+  profilePhoto    String?
+  carModel        String?   // GT_TSI, GT_TDI
+  carYear         Int?
+  carVIN          String?
+  
+  role            String    @default("USER") // USER, MEMBER, MODERATOR, ADMIN
+  emailVerified   DateTime?
+  phoneVerified   Boolean   @default(false)
+  
+  showPhone       Boolean   @default(true)
+  showEmail       Boolean   @default(true)
+  showCarDetails  Boolean   @default(true)
+  
+  notifyMembership    Boolean @default(true)
+  notifyNewListings   Boolean @default(true)
+  notifyMerchandise   Boolean @default(true)
+  notifyAnnouncements Boolean @default(true)
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  lastLoginAt     DateTime?
+  
+  memberships     Membership[]
+  partsListings   PartsListing[]
+  carListings     CarListing[]
+  orders          Order[]
+  notifications   Notification[]
+  sessions        Session[]
+  accounts        Account[]
+}
+
+// NextAuth Models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================
+// MEMBERSHIP
+// ============================================
+
+model Membership {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan          String   @default("ANNUAL")
+  startDate     DateTime @default(now())
+  expiryDate    DateTime
+  status        String   @default("ACTIVE") // ACTIVE, EXPIRED, CANCELLED
+  autoRenew     Boolean  @default(true)
+  amount        Float
+  transactionId String?
+  paymentMethod String?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ============================================
+// CLASSIFIEDS - PARTS
+// ============================================
+
+model PartsListing {
+  id               String   @id @default(cuid())
+  sellerId         String
+  seller           User     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  title            String
+  category         String   // ENGINE_PARTS, BODY_PARTS, INTERIOR, ELECTRONICS, WHEELS_TIRES, OTHER
+  description      String
+  price            Float
+  city             String
+  state            String
+  images           String   // JSON array of URLs
+  contactPreference String  @default("WHATSAPP") // PHONE, EMAIL, WHATSAPP
+  status           String   @default("AVAILABLE") // AVAILABLE, SOLD, EXPIRED, DELETED
+  views            Int      @default(0)
+  inquiries        Int      @default(0)
+  expiresAt        DateTime
+  markedSoldAt     DateTime?
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+// ============================================
+// CLASSIFIEDS - CARS
+// ============================================
+
+model CarListing {
+  id                   String   @id @default(cuid())
+  sellerId             String
+  seller               User     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  submissionStatus     String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  
+  make                 String   @default("Volkswagen")
+  model                String   @default("Polo")
+  variant              String
+  year                 Int
+  registrationNumber   String
+  kilometers           Int
+  ownership            String   // FIRST, SECOND, THIRD_PLUS
+  modifications        String?
+  serviceHistory       String?
+  
+  askingPrice          Float
+  soldPrice            Float?
+  city                 String
+  state                String
+  images               String
+  description          String
+  
+  approvedById         String?
+  rejectionReason      String?
+  commissionPercentage Float    @default(2.0)
+  commissionAmount     Float?
+  commissionPaid       Boolean  @default(false)
+  
+  isFeatured           Boolean  @default(false)
+  isHotDeal            Boolean  @default(false)
+  views                Int      @default(0)
+  inquiries            Int      @default(0)
+  status               String   @default("PENDING") // PENDING, ACTIVE, SOLD, EXPIRED, REJECTED
+  
+  expiresAt            DateTime?
+  approvedAt           DateTime?
+  soldAt               DateTime?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+// ============================================
+// MERCHANDISE
+// ============================================
+
+model Product {
+  id               String    @id @default(cuid())
+  name             String
+  description      String
+  category         String    // APPAREL, ACCESSORIES, STICKERS, OTHER
+  sku              String    @unique
+  price            Float
+  memberPrice      Float
+  images           String
+  variants         String?
+  totalStock       Int       @default(0)
+  isFeatured       Boolean   @default(false)
+  isNewArrival     Boolean   @default(false)
+  isLimitedEdition Boolean   @default(false)
+  isActive         Boolean   @default(true)
+  
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  
+  orderItems       OrderItem[]
+}
+
+model Order {
+  id              String    @id @default(cuid())
+  orderNumber     String    @unique
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  subtotal        Float
+  memberDiscount  Float     @default(0)
+  shippingCharges Float     @default(0)
+  total           Float
+  
+  shippingAddress String
+  
+  status          String    @default("PENDING") // PENDING, CONFIRMED, PACKED, SHIPPED, DELIVERED, CANCELLED
+  paymentId       String?
+  paymentMethod   String?
+  trackingNumber  String?
+  notes           String?
+  cancelledAt     DateTime?
+  cancelReason    String?
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  items           OrderItem[]
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product @relation(fields: [productId], references: [id])
+  name        String
+  variant     String?
+  quantity    Int
+  price       Float
+  memberPrice Float
+}
+
+// ============================================
+// CONTENT MANAGEMENT
+// ============================================
+
+model Banner {
+  id           String   @id @default(cuid())
+  title        String
+  imageUrl     String
+  linkUrl      String?
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model TeamMember {
+  id           String   @id @default(cuid())
+  name         String
+  role         String
+  photo        String?
+  bio          String?
+  socialLinks  String?
+  displayOrder Int      @default(0)
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model AffiliatePartner {
+  id           String    @id @default(cuid())
+  name         String
+  description  String?
+  bannerImage  String
+  bannerType   String    @default("CARD") // LARGE, CARD
+  affiliateUrl String
+  displayOrder Int       @default(0)
+  isActive     Boolean   @default(true)
+  totalClicks  Int       @default(0)
+  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  
+  clicks       ClickTracking[]
+}
+
+model ClickTracking {
+  id         String           @id @default(cuid())
+  partnerId  String
+  partner    AffiliatePartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  userId     String?
+  ipAddress  String?
+  userAgent  String?
+  clickedAt  DateTime         @default(now())
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String?
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  icon      String?
+  actionUrl String?
+  type      String    // MEMBERSHIP, LISTING, ORDER, ANNOUNCEMENT, SYSTEM
+  isRead    Boolean   @default(false)
+  sentAt    DateTime  @default(now())
+  readAt    DateTime?
+}
+
+model Newsletter {
+  id              String    @id @default(cuid())
+  subject         String
+  content         String
+  targetAudience  String    @default("ALL") // ALL, MEMBERS, CUSTOM
+  recipientCount  Int       @default(0)
+  deliveredCount  Int       @default(0)
+  openedCount     Int       @default(0)
+  clickedCount    Int       @default(0)
+  status          String    @default("DRAFT") // DRAFT, SCHEDULED, SENT
+  scheduledAt     DateTime?
+  sentAt          DateTime?
+  createdById     String?
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// ============================================
+// CONTENT PAGES
+// ============================================
+
+model ContentPage {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  content   String
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ContactSubmission {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String
+  isRead    Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+}
