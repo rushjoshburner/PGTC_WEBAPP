@@ -46,10 +46,12 @@ export async function POST(request: NextRequest) {
         // For now, assuming basic session check. 
         // In a real app we'd check role === 'ADMIN' or 'MODERATOR'
 
-        // const session = await getServerSession(authOptions);
-        // if (!session) {
-        //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        // }
+        const session = await getServerSession(authOptions);
+
+        // Strict Admin Check
+        if (!session || !session.user || session.user.role !== "ADMIN") {
+            return NextResponse.json({ error: "Unauthorized: Admins only" }, { status: 401 });
+        }
 
         const body = await request.json();
         const validatedData = eventSchema.parse(body);
