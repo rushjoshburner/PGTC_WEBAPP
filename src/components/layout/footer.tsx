@@ -1,7 +1,30 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export function Footer() {
+    const [email, setEmail] = useState("");
+    const [isSubscribing, setIsSubscribing] = useState(false);
+
+    const handleSubscribe = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!email) {
+            toast.error("Please enter your email.");
+            return;
+        }
+
+        setIsSubscribing(true);
+        // Simulating API call
+        setTimeout(() => {
+            toast.success("Subscribed! You'll hear from us soon.");
+            setEmail("");
+            setIsSubscribing(false);
+        }, 1000);
+    };
+
     return (
         <footer className="bg-black border-t border-white/10 pt-16 pb-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -48,16 +71,22 @@ export function Footer() {
                     {/* Stay Tuned */}
                     <div>
                         <h4 className="text-white font-display text-sm uppercase mb-6">Stay Tuned</h4>
-                        <div className="flex flex-col gap-4">
+                        <form onSubmit={handleSubscribe} className="flex flex-col gap-4">
                             <input
                                 type="email"
                                 placeholder="Enter your email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                                 className="bg-[#1A1A1A] border border-white/10 text-white px-4 py-3 text-sm focus:outline-none focus:border-red-600 transition-colors rounded-sm font-body"
                             />
-                            <button className="bg-white text-black px-4 py-3 text-xs font-bold uppercase font-display hover:bg-gray-200 transition-colors">
-                                Subscribe
+                            <button
+                                type="submit"
+                                disabled={isSubscribing}
+                                className="bg-white text-black px-4 py-3 text-xs font-bold uppercase font-display hover:bg-gray-200 transition-colors disabled:opacity-70 disabled:cursor-wait"
+                            >
+                                {isSubscribing ? "Subscribing..." : "Subscribe"}
                             </button>
-                        </div>
+                        </form>
                     </div>
                 </div>
 
